@@ -111,7 +111,7 @@ export default function StockOut() {
     : '0.00';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-4">Record Stock Out</h1>
@@ -163,8 +163,8 @@ export default function StockOut() {
             </div>
           </div>
 
-          <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
-            <p className="text-sm text-blue-800">
+          <div className="mb-4 p-3 bg-gray-100 rounded border border-gray-300">
+            <p className="text-sm text-black">
               <strong>Total Cost:</strong> {totalCost}Frw
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function StockOut() {
           </div>
 
           <div className="flex gap-3">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-semibold">Record Stock Out</button>
+            <button className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded font-semibold">Record Stock Out</button>
             <button type="button" onClick={() => { setForm({ sparePartId: '', stockOutQuantity: '', stockOutUnitPrice: '', issuedTo: '', notes: '' }); setSelectedPart(null); }} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Reset</button>
           </div>
         </form>
@@ -190,7 +190,7 @@ export default function StockOut() {
           {loading ? <p>Loading...</p> : (
             <div className="bg-white rounded shadow overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-100">
+                <thead className="bg-black text-white">
                   <tr>
                     <th className="text-left px-4 py-2">Name</th>
                     <th className="text-left px-4 py-2">Category</th>

@@ -246,3 +246,54 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
   }
 };
+
+// ===================== FULL STOCK REPORT =====================
+
+// Returns a combined list of stock in/out transactions sorted by date
+exports.getStockReport = async (req, res) => {
+  try {
+    // fetch both types of records
+    const stockIns = await StockIn.find()
+      .populate('sparePart')
+      .populate('createdBy', 'username email');
+    const stockOuts = await StockOut.find()
+      .populate('sparePart')
+      .populate('createdBy', 'username email');
+
+    // build unified array with a type flag
+    const combined = [];
+
+    stockIns.forEach(si => {
+      combined.push({
+        type: 'IN',
+        date: si.stockInDate,
+        sparePart: si.sparePart,
+        quantity: si.stockInQuantity,
+        supplier: si.supplier,
+        notes: si.notes,
+        createdBy: si.createdBy,
+      });
+    });
+
+    stockOuts.forEach(so => {
+      combined.push({
+        type: 'OUT',
+        date: so.stockOutDate,
+        sparePart: so.sparePart,
+        quantity: so.stockOutQuantity,
+        unitPrice: so.stockOutUnitPrice,
+        totalPrice: so.stockOutTotalPrice,
+        issuedTo: so.issuedTo,
+        notes: so.notes,
+        createdBy: so.createdBy,
+      });
+    });
+
+    // sort descending by date
+    combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json(combined);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching stock report', error: error.message });
+  }
+};

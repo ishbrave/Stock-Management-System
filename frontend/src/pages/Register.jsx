@@ -35,7 +35,7 @@ const Register = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-96">
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-700">
           Create Account 
@@ -83,7 +83,7 @@ const Register = () => {
 
           <button 
             disabled={loading}
-            className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full bg-black text-white p-3 rounded-lg hover:bg-gray-800 disabled:opacity-50"
           >
             {loading ? "Registering..." : "Register"}
           </button>
@@ -91,7 +91,7 @@ const Register = () => {
 
         <p className="text-center mt-4 text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="text-indigo-600 font-semibold">
+          <Link to="/login" className="text-black font-semibold">
             Login
           </Link>
         </p>

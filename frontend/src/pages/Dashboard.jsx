@@ -57,8 +57,8 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const StatCard = ({ icon, label, value, color }) => (
-    <div className={`bg-gradient-to-br ${color} rounded-lg shadow-lg p-6 text-white`}>
+  const StatCard = ({ icon, label, value /* color unused now */ }) => (
+    <div className="bg-white border border-gray-300 rounded-lg shadow-lg p-6 text-black">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm opacity-90">{label}</p>
@@ -70,13 +70,13 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome, {user?.username}! </h1>
+          <h1 className="text-4xl font-bold text-black mb-2">Welcome, {user?.username}! </h1>
           <p className="text-gray-600">Here's an overview of your stock management system</p>
         </div>
 
@@ -132,7 +132,6 @@ const Dashboard = () => {
             icon="📋"
             buttonText="Go to Spare Parts"
             onClick={() => navigate('/spare-parts')}
-            color="bg-blue-50 hover:bg-blue-100"
           />
           <QuickActionCard
             title="Record Stock In"
@@ -140,7 +139,6 @@ const Dashboard = () => {
             icon="📥"
             buttonText="Record Stock In"
             onClick={() => navigate('/stock-in')}
-            color="bg-green-50 hover:bg-green-100"
           />
           <QuickActionCard
             title="Record Stock Out"
@@ -148,15 +146,13 @@ const Dashboard = () => {
             icon="📤"
             buttonText="Record Stock Out"
             onClick={() => navigate('/stock-out')}
-            color="bg-orange-50 hover:bg-orange-100"
           />
           <QuickActionCard
             title="View Reports"
             description="Check stock history and transactions"
             icon="📊"
             buttonText="View Reports"
-            onClick={() => navigate('/spare-parts')}
-            color="bg-purple-50 hover:bg-purple-100"
+            onClick={() => navigate('/reports')}
           />
         </div>
       </div>
@@ -164,14 +160,14 @@ const Dashboard = () => {
   );
 };
 
-const QuickActionCard = ({ title, description, icon, buttonText, onClick, color }) => (
-  <div className={`${color} rounded-lg shadow-md p-6 cursor-pointer transition duration-300`}>
-    <div className="text-3xl mb-3">{icon}</div>
-    <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
+const QuickActionCard = ({ title, description, icon, buttonText, onClick /* color unused */ }) => (
+  <div className="bg-white border border-gray-300 rounded-lg shadow-md p-6 cursor-pointer transition duration-300 hover:bg-gray-100">
+    <div className="text-3xl mb-3 text-black">{icon}</div>
+    <h3 className="text-lg font-semibold text-black mb-2">{title}</h3>
     <p className="text-sm text-gray-600 mb-4">{description}</p>
     <button
       onClick={onClick}
-      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-2 rounded-lg transition duration-200"
+      className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 rounded-lg transition duration-200"
     >
       {buttonText}
     </button>

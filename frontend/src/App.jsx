@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import SpareParts from "./pages/SpareParts";
 import StockIn from "./pages/StockIn";
 import StockOut from "./pages/StockOut";
+import Reports from "./pages/Reports";
 
 function App() {
   const { user, loading } = useContext(AuthContext);
@@ -18,12 +19,12 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
           <div className="inline-block">
-            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+            <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mb-4"></div>
           </div>
-          <p className="text-lg text-white font-semibold">Loading...</p>
+          <p className="text-lg text-black font-semibold">Loading...</p>
         </div>
       </div>
     );
@@ -37,6 +38,7 @@ function App() {
       <Route path="/spare-parts" element={isAuthenticated ? <SpareParts /> : <Navigate to="/login" replace />} />
       <Route path="/stock-in" element={isAuthenticated ? <StockIn /> : <Navigate to="/login" replace />} />
       <Route path="/stock-out" element={isAuthenticated ? <StockOut /> : <Navigate to="/login" replace />} />
+      <Route path="/reports" element={isAuthenticated ? <Reports /> : <Navigate to="/login" replace />} />
     </Routes>
   );
 }

@@ -30,7 +30,7 @@ const handleSubmit = async (e) => {
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-96">
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-700">
           LEARNING
@@ -63,7 +63,7 @@ const handleSubmit = async (e) => {
 
           <button
             disabled={loading}
-            className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+            className="w-full bg-black text-white p-3 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
@@ -71,7 +71,7 @@ const handleSubmit = async (e) => {
 
         <p className="text-center mt-4 text-sm">
           Don’t have an account?{" "}
-          <Link to="/register" className="text-indigo-600 font-semibold">
+          <Link to="/register" className="text-black font-semibold">
             Register
           </Link>
         </p>

@@ -30,4 +30,8 @@ router.post('/stock-out', stockController.createStockOut);
 
 router.get('/dashboard/stats', stockController.getDashboardStats);
 
+// ===================== REPORTS =====================
+// combined in/out transaction history
+router.get('/reports', stockController.getStockReport);
+
 module.exports = router;

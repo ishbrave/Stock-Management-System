@@ -66,7 +66,7 @@ export default function StockIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-4">Record Stock In</h1>
@@ -98,7 +98,7 @@ export default function StockIn() {
           </div>
 
           <div className="flex gap-3">
-            <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Record Stock In</button>
+            <button className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded">Record Stock In</button>
             <button type="button" onClick={() => setForm({ sparePartId: '', stockInQuantity: '', supplier: '', notes: '' })} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Reset</button>
           </div>
         </form>
@@ -108,7 +108,7 @@ export default function StockIn() {
           {loading ? <p>Loading...</p> : (
             <div className="bg-white rounded shadow">
               <table className="w-full">
-                <thead className="bg-gray-100">
+                <thead className="bg-black text-white">
                   <tr>
                     <th className="text-left px-4 py-2">Name</th>
                     <th className="text-left px-4 py-2">Category</th>

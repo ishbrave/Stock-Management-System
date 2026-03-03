@@ -138,18 +138,18 @@ export default function SpareParts() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800">Spare Parts Management</h1>
+            <h1 className="text-4xl font-bold text-black">Spare Parts Management</h1>
             <p className="text-gray-600 mt-2">Manage your inventory of spare parts</p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+            className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
           >
             + Add Spare Part
           </button>
@@ -174,7 +174,7 @@ export default function SpareParts() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                  <thead className="bg-black text-white">
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold">Category</th>
@@ -189,7 +189,7 @@ export default function SpareParts() {
                       <tr key={part._id} className="hover:bg-gray-50 transition duration-150">
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">{part.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                          <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">
                             {part.category}
                           </span>
                         </td>
@@ -232,7 +232,7 @@ export default function SpareParts() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4">
+            <div className="bg-black text-white px-6 py-4">
               <h2 className="text-2xl font-bold">
                 {editingId ? 'Edit Spare Part' : 'Add New Spare Part'}
               </h2>
@@ -309,7 +309,7 @@ export default function SpareParts() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200"
+                  className="flex-1 bg-black hover:bg-gray-800 text-white font-semibold py-2 rounded-lg transition duration-200"
                 >
                   {editingId ? 'Update' : 'Add'}
                 </button>
