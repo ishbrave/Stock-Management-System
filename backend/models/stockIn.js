@@ -7,6 +7,8 @@ const stockInSchema = new mongoose.Schema({
     required: true 
   },
   stockInQuantity: { type: Number, required: true },
+  stockInUnitPrice: { type: Number, required: true },
+  stockInTotalPrice: { type: Number, default: 0 },
   stockInDate: { type: Date, default: Date.now },
   supplier: { type: String },
   notes: { type: String },
@@ -16,5 +18,9 @@ const stockInSchema = new mongoose.Schema({
     required: true 
   },
 }, { timestamps: true });
+
+stockInSchema.pre('save', function() {
+  this.stockInTotalPrice = this.stockInQuantity * this.stockInUnitPrice;
+});
 
 module.exports = mongoose.model('StockIn', stockInSchema);

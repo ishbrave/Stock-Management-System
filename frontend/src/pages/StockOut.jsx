@@ -1,222 +1,362 @@
-import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
+import { useEffect, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  ArrowUpFromLine,
+  BadgeDollarSign,
+  ClipboardList,
+  RefreshCcw,
+  Send,
+} from "lucide-react";
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = "http://localhost:5000/api";
+
+const inputClassName =
+  "w-full rounded-lg border border-sky-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100";
 
 export default function StockOut() {
   const [spareParts, setSpareParts] = useState([]);
   const [selectedPart, setSelectedPart] = useState(null);
-  const [form, setForm] = useState({ sparePartId: '', stockOutQuantity: '', stockOutUnitPrice: '', issuedTo: '', notes: '' });
+  const [form, setForm] = useState({
+    sparePartId: "",
+    stockOutQuantity: "",
+    stockOutUnitPrice: "",
+    issuedTo: "",
+    notes: "",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     fetchSpareParts();
   }, []);
 
+  const totalCost = useMemo(() => {
+    if (!form.stockOutQuantity || !form.stockOutUnitPrice) {
+      return "0.00";
+    }
+
+    return (Number(form.stockOutQuantity) * Number(form.stockOutUnitPrice)).toFixed(2);
+  }, [form.stockOutQuantity, form.stockOutUnitPrice]);
+
   const fetchSpareParts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      console.log('Fetching spare parts for stock out');
-      
-      const res = await fetch(`${API_URL}/stock/spare-parts`, { 
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        } 
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/stock/spare-parts`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-      
-      console.log('Stock out spare parts response status:', res.status);
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP Error ${res.status}: Failed to fetch spare parts`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP Error ${response.status}: Failed to fetch spare parts`);
       }
-      
-      const data = await res.json();
-      console.log('Spare parts received:', data);
+
+      const data = await response.json();
       setSpareParts(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching spare parts:', err);
-      setError(err.message || 'Failed to fetch spare parts');
+      setError(err.message || "Failed to fetch spare parts");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setSuccess("");
+    setError(null);
 
-    // Update selected part when spare part changes
-    if (name === 'sparePartId') {
-      const part = spareParts.find(p => p._id === value);
+    setForm((current) => ({ ...current, [name]: value }));
+
+    if (name === "sparePartId") {
+      const part = spareParts.find((item) => item._id === value) || null;
       setSelectedPart(part);
-      setForm(prev => ({ ...prev, stockOutUnitPrice: part ? part.unitPrice : '' }));
+      setForm((current) => ({
+        ...current,
+        sparePartId: value,
+        stockOutUnitPrice: part ? part.unitPrice : "",
+      }));
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setForm({
+      sparePartId: "",
+      stockOutQuantity: "",
+      stockOutUnitPrice: "",
+      issuedTo: "",
+      notes: "",
+    });
+    setSelectedPart(null);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSuccess("");
 
     if (!selectedPart) {
-      setError('Please select a spare part');
+      setError("Please select a spare part");
       return;
     }
 
-    if (parseInt(form.stockOutQuantity) > selectedPart.quantity) {
+    if (Number(form.stockOutQuantity) > Number(selectedPart.quantity)) {
       setError(`Insufficient stock. Available: ${selectedPart.quantity}`);
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/stock/stock-out`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/stock/stock-out`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           sparePartId: form.sparePartId,
           stockOutQuantity: form.stockOutQuantity,
           stockOutUnitPrice: form.stockOutUnitPrice,
           issuedTo: form.issuedTo,
-          notes: form.notes
-        })
+          notes: form.notes,
+        }),
       });
 
-      console.log('Stock out response status:', res.status);
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        const errorMessage = err.message || err.error || `HTTP Error ${res.status}`;
-        console.error('Stock out error:', errorMessage);
-        throw new Error(errorMessage);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || err.error || `HTTP Error ${response.status}`);
       }
 
-      const result = await res.json();
-      console.log('Stock out success:', result);
-      setForm({ sparePartId: '', stockOutQuantity: '', stockOutUnitPrice: '', issuedTo: '', notes: '' });
-      setSelectedPart(null);
-      alert('Stock out recorded successfully');
+      resetForm();
+      setSuccess("Stock out recorded successfully.");
       fetchSpareParts();
     } catch (err) {
-      console.error('Error in handleSubmit:', err);
       setError(err.message);
     }
   };
 
-  const totalCost = form.stockOutQuantity && form.stockOutUnitPrice 
-    ? (parseFloat(form.stockOutQuantity) * parseFloat(form.stockOutUnitPrice)).toFixed(2)
-    : '0.00';
-
   return (
-    <div className="min-h-screen bg-white text-black">
-      <Navbar />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-4">Record Stock Out</h1>
+    <div className="page-shell px-4 py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <section className="surface-card rounded-xl px-6 py-8 lg:px-8">
+          <p className="text-xs uppercase tracking-[0.35em] text-sky-500">Stock Out</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-800">Issue parts with clarity</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
+            Record outgoing parts, track recipients, and keep your inventory levels consistent.
+          </p>
+        </section>
 
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+        {(error || success) && (
+          <div
+            className={`px-5 py-4 text-sm ${
+              error ? "rounded-lg border border-sky-200 bg-sky-50 text-sky-800" : "rounded-lg border border-sky-100 bg-white text-slate-700"
+            }`}
+          >
+            {error || success}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md mb-6">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Spare Part</label>
-            <select name="sparePartId" value={form.sparePartId} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2">
-              <option value="">Select a spare part</option>
-              {spareParts.map(p => (
-                <option key={p._id} value={p._id}>
-                  {p.name} - {p.category} (Qty: {p.quantity})
-                </option>
-              ))}
-            </select>
+        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="surface-card rounded-xl p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-800">Stock Out Form</h2>
+                <p className="mt-2 text-sm text-slate-500">Issue stock and keep outbound movement well documented.</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-600 text-white">
+                <ArrowUpFromLine size={20} />
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Spare Part</span>
+                <select
+                  name="sparePartId"
+                  value={form.sparePartId}
+                  onChange={handleChange}
+                  required
+                  className={inputClassName}
+                >
+                  <option value="">Select a spare part</option>
+                  {spareParts.map((part) => (
+                    <option key={part._id} value={part._id}>
+                      {part.name} - {part.category} (Qty: {part.quantity})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-600">Quantity to Issue</span>
+                  <input
+                    name="stockOutQuantity"
+                    value={form.stockOutQuantity}
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    min="1"
+                    className={inputClassName}
+                    placeholder="0"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-600">Unit Price (Frw)</span>
+                  <input
+                    name="stockOutUnitPrice"
+                    value={form.stockOutUnitPrice}
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className={inputClassName}
+                    placeholder="0.00"
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-xl border border-sky-100 bg-sky-50 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-white">
+                    <BadgeDollarSign size={18} />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-500">Total Cost</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-800">{totalCost} Frw</p>
+                  </div>
+                </div>
+              </div>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Issued To</span>
+                <input
+                  name="issuedTo"
+                  value={form.issuedTo}
+                  onChange={handleChange}
+                  className={inputClassName}
+                  placeholder="Department or person"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Notes</span>
+                <textarea
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleChange}
+                  className={inputClassName}
+                  rows={4}
+                  placeholder="Optional issue notes"
+                />
+              </label>
+
+              <div className="flex gap-3">
+                <button className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">
+                  <Send size={17} />
+                  Record Stock Out
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
+                >
+                  <RefreshCcw size={17} />
+                  Reset
+                </button>
+              </div>
+            </form>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity to Issue</label>
-              <input
-                name="stockOutQuantity"
-                value={form.stockOutQuantity}
-                onChange={handleChange}
-                required
-                type="number"
-                min="1"
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-              {selectedPart && (
-                <p className="text-xs text-gray-600 mt-1">Available: {selectedPart.quantity}</p>
+          <div className="space-y-6">
+            <div className="surface-card rounded-xl p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Availability Snapshot</h3>
+                  <p className="text-sm text-slate-500">Review the selected item before issuing it.</p>
+                </div>
+              </div>
+
+              {selectedPart ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-lg border border-sky-100 bg-sky-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-500">Part</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-800">{selectedPart.name}</p>
+                  </div>
+                  <div className="rounded-lg border border-sky-100 bg-sky-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-500">Category</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-800">{selectedPart.category}</p>
+                  </div>
+                  <div className="rounded-lg border border-sky-200 bg-sky-600 p-4 text-white">
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-50/85">Available Quantity</p>
+                    <p className="mt-2 text-lg font-semibold">{selectedPart.quantity}</p>
+                  </div>
+                  <div className="rounded-lg border border-sky-100 bg-sky-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-500">Unit Price</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-800">
+                      {Number(selectedPart.unitPrice).toFixed(2)} Frw
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-sky-200 px-4 py-10 text-center text-sm text-slate-500">
+                  Select a spare part to see its stock availability.
+                </div>
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (Frw)</label>
-              <input
-                name="stockOutUnitPrice"
-                value={form.stockOutUnitPrice}
-                onChange={handleChange}
-                required
-                type="number"
-                step="0.01"
-                min="0"
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
+            <div className="surface-card overflow-hidden rounded-xl">
+              <div className="flex items-center justify-between border-b border-sky-100 px-6 py-5">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Inventory Reference</h3>
+                  <p className="text-sm text-slate-500">Current quantities available for issue.</p>
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-sky-600 text-white">
+                  <ClipboardList size={19} />
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex h-56 items-center justify-center text-sm uppercase tracking-[0.25em] text-gray-500">
+                  Loading inventory
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className="bg-sky-600 text-white">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.24em]">Name</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.24em]">Category</th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.24em]">Quantity</th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.24em]">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-sky-50">
+                      {spareParts.map((part) => (
+                        <tr key={part._id} className="transition hover:bg-sky-50/60">
+                          <td className="px-6 py-4 font-medium text-slate-800">{part.name}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500">{part.category}</td>
+                          <td className="px-6 py-4 text-right text-sm font-semibold text-slate-800">{part.quantity}</td>
+                          <td className="px-6 py-4 text-right text-sm text-slate-500">
+                            {Number(part.totalPrice).toFixed(2)} Frw
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="mb-4 p-3 bg-gray-100 rounded border border-gray-300">
-            <p className="text-sm text-black">
-              <strong>Total Cost:</strong> {totalCost}Frw
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Issued To</label>
-            <input name="issuedTo" value={form.issuedTo} onChange={handleChange} className="w-full border border-gray-300 rounded px-3 py-2" />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea name="notes" value={form.notes} onChange={handleChange} className="w-full border border-gray-300 rounded px-3 py-2" rows={3}></textarea>
-          </div>
-
-          <div className="flex gap-3">
-            <button className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded font-semibold">Record Stock Out</button>
-            <button type="button" onClick={() => { setForm({ sparePartId: '', stockOutQuantity: '', stockOutUnitPrice: '', issuedTo: '', notes: '' }); setSelectedPart(null); }} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Reset</button>
-          </div>
-        </form>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-3">Stock Inventory</h2>
-          {loading ? <p>Loading...</p> : (
-            <div className="bg-white rounded shadow overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-black text-white">
-                  <tr>
-                    <th className="text-left px-4 py-2">Name</th>
-                    <th className="text-left px-4 py-2">Category</th>
-                    <th className="text-right px-4 py-2">Quantity</th>
-                    <th className="text-right px-4 py-2">Unit Price</th>
-                    <th className="text-right px-4 py-2">Total Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {spareParts.map(p => (
-                    <tr key={p._id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-2 font-medium">{p.name}</td>
-                      <td className="px-4 py-2">{p.category}</td>
-                      <td className={`px-4 py-2 text-right ${p.quantity <= 5 ? 'text-red-600 font-semibold' : ''}`}>
-                        {p.quantity}
-                      </td>
-                      <td className="px-4 py-2 text-right">{p.unitPrice.toFixed(2)}Frw</td>
-                      <td className="px-4 py-2 text-right font-semibold">{p.totalPrice.toFixed(2)}Frw</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
+        </section>
       </div>
     </div>
   );

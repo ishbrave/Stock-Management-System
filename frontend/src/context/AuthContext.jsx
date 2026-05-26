@@ -1,8 +1,7 @@
-import { createContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { AuthContext } from './AuthContextObject';
 
 const API_URL = 'http://localhost:5000/api';
-
-export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -24,7 +23,7 @@ export const AuthProvider = ({ children }) => {
             console.log('Token validation response status:', response.status);
 
             if (response.ok) {
-                const data = await response.json();
+                await response.json();
                 console.log('Token is valid');
                 return true;
             } else {

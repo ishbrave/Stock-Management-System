@@ -1,7 +1,29 @@
-import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
+import { useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  PackagePlus,
+  PencilLine,
+  Shapes,
+  Trash2,
+  X,
+} from "lucide-react";
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = "http://localhost:5000/api";
+
+const inputClassName =
+  "w-full rounded-lg border border-sky-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100";
+
+function SummaryCard({ icon: Icon, label, value }) {
+  return (
+    <div className="surface-card rounded-xl p-5">
+      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-sky-600 text-white">
+        <Icon size={20} />
+      </div>
+      <p className="mt-4 text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-slate-800">{value}</p>
+    </div>
+  );
+}
 
 export default function SpareParts() {
   const [spareParts, setSpareParts] = useState([]);
@@ -10,94 +32,87 @@ export default function SpareParts() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    quantity: '',
-    unitPrice: '',
-    description: '',
+    name: "",
+    category: "",
+    quantity: "",
+    unitPrice: "",
+    description: "",
   });
 
   useEffect(() => {
     fetchSpareParts();
   }, []);
 
+  const summary = useMemo(() => {
+    const categories = new Set(spareParts.map((part) => part.category)).size;
+
+    return { categories };
+  }, [spareParts]);
+
   const fetchSpareParts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      console.log('Fetching spare parts with token:', token ? 'Present' : 'Missing');
-      
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/stock/spare-parts`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-
-      console.log('Spare parts response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP Error ${response.status}: Failed to fetch spare parts`);
       }
-      
+
       const data = await response.json();
-      console.log('Spare parts received:', data);
       setSpareParts(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching spare parts:', err);
-      setError(err.message || 'Failed to fetch spare parts');
+      setError(err.message || "Failed to fetch spare parts");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setError(null); // Clear error when user starts typing
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+    setError(null);
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     try {
-      const token = localStorage.getItem('token');
-      const method = editingId ? 'PUT' : 'POST';
-      const url = editingId 
+      const token = localStorage.getItem("token");
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId
         ? `${API_URL}/stock/spare-parts/${editingId}`
         : `${API_URL}/stock/spare-parts`;
 
-      console.log('Submitting form data:', formData);
-      
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-
-      console.log('Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || errorData.error || `HTTP Error ${response.status}`;
-        throw new Error(errorMessage);
+        throw new Error(errorData.message || errorData.error || `HTTP Error ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('Success:', data);
-      setFormData({ name: '', category: '', quantity: '', unitPrice: '', description: '' });
+      setFormData({ name: "", category: "", quantity: "", unitPrice: "", description: "" });
       setShowModal(false);
       setEditingId(null);
       fetchSpareParts();
     } catch (err) {
-      console.error('Error in handleSubmit:', err);
       setError(err.message);
     }
   };
@@ -109,22 +124,27 @@ export default function SpareParts() {
       category: sparePart.category,
       quantity: sparePart.quantity,
       unitPrice: sparePart.unitPrice,
-      description: sparePart.description || '',
+      description: sparePart.description || "",
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this spare part?')) return;
+    if (!confirm("Are you sure you want to delete this spare part?")) {
+      return;
+    }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/stock/spare-parts/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Failed to delete spare part');
+      if (!response.ok) {
+        throw new Error("Failed to delete spare part");
+      }
+
       fetchSpareParts();
     } catch (err) {
       setError(err.message);
@@ -134,139 +154,165 @@ export default function SpareParts() {
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ name: '', category: '', quantity: '', unitPrice: '', description: '' });
+    setFormData({ name: "", category: "", quantity: "", unitPrice: "", description: "" });
   };
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <Navbar />
+    <div className="page-shell px-4 py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <section className="surface-card rounded-xl px-6 py-8 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-sky-500">Inventory</p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-800">
+                Spare Parts Management
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
+                Keep your inventory clean, traceable, and ready for daily stock movement.
+              </p>
+            </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-black">Spare Parts Management</h1>
-            <p className="text-gray-600 mt-2">Manage your inventory of spare parts</p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
+            >
+              <PackagePlus size={18} />
+              Add Spare Part
+            </button>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
-          >
-            + Add Spare Part
-          </button>
-        </div>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard icon={Box} label="Total Records" value={spareParts.length.toLocaleString()} />
+          <SummaryCard icon={Shapes} label="Categories" value={summary.categories.toLocaleString()} />
+        </section>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-800">
             {error}
           </div>
         )}
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg text-gray-600">Loading spare parts...</div>
+        <section className="surface-card overflow-hidden rounded-xl">
+          <div className="flex items-center justify-between border-b border-sky-100 px-6 py-5">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800">Inventory Table</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                View category labels and manage your spare parts.
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {spareParts.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <p className="text-lg">No spare parts found. Add one to get started!</p>
+
+          {loading ? (
+            <div className="flex h-64 items-center justify-center text-sm uppercase tracking-[0.25em] text-gray-500">
+              Loading spare parts
+            </div>
+          ) : spareParts.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 text-sky-700">
+                <Box size={28} />
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-black text-white">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Category</th>
-                      <th className="px-6 py-3 text-right text-sm font-semibold">Quantity</th>
-                      <th className="px-6 py-3 text-right text-sm font-semibold">Unit Price</th>
-                      <th className="px-6 py-3 text-right text-sm font-semibold">Total Price</th>
-                      <th className="px-6 py-3 text-center text-sm font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {spareParts.map((part) => (
-                      <tr key={part._id} className="hover:bg-gray-50 transition duration-150">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{part.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">
-                            {part.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-right">
-                          <span className={part.quantity <= 5 ? 'text-red-600 font-semibold' : 'text-gray-900'}>
-                            {part.quantity}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-right text-gray-600">
-                          {part.unitPrice.toFixed(2)}Frw
-                        </td>
-                        <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">
-                          {part.totalPrice.toFixed(2)}Frw
-                        </td>
-                        <td className="px-6 py-4 text-sm text-center">
+              <h3 className="mt-5 text-xl font-semibold text-slate-800">No spare parts yet</h3>
+              <p className="mt-2 text-sm text-slate-500">Add your first inventory item to get started.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-sky-600 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.24em]">Part</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.24em]">Category</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.24em]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-sky-50">
+                  {spareParts.map((part) => (
+                    <tr key={part._id} className="transition hover:bg-sky-50/60">
+                      <td className="px-6 py-5">
+                        <p className="font-semibold text-slate-800">{part.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">{part.description || "No description"}</p>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="rounded-md border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+                          {part.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleEdit(part)}
-                            className="text-blue-600 hover:text-blue-800 font-semibold mr-3"
+                            className="inline-flex items-center gap-2 rounded-lg border border-sky-100 bg-white px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50"
                           >
+                            <PencilLine size={16} />
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(part._id)}
-                            className="text-red-600 hover:text-red-800 font-semibold"
+                            className="inline-flex items-center gap-2 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
                           >
+                            <Trash2 size={16} />
                             Delete
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="bg-black text-white px-6 py-4">
-              <h2 className="text-2xl font-bold">
-                {editingId ? 'Edit Spare Part' : 'Add New Spare Part'}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/25 p-4">
+          <div className="surface-card max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl">
+            <div className="flex items-center justify-between border-b border-sky-100 px-6 py-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-sky-500">
+                  {editingId ? "Update" : "Create"}
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-800">
+                  {editingId ? "Edit Spare Part" : "Add Spare Part"}
+                </h2>
+              </div>
+              <button
+                onClick={closeModal}
+                className="rounded-lg border border-sky-100 bg-sky-50 p-2 text-sky-700 transition hover:bg-sky-100"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+            <form onSubmit={handleSubmit} className="grid gap-5 px-6 py-6 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Part Name</span>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleFormChange}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Battery Pack"
+                  className={inputClassName}
+                  placeholder="Battery Pack"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Category</span>
                 <input
                   type="text"
                   name="category"
                   value={formData.category}
                   onChange={handleFormChange}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Electronics"
+                  className={inputClassName}
+                  placeholder="Electronics"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Quantity</span>
                 <input
                   type="number"
                   name="quantity"
@@ -274,13 +320,13 @@ export default function SpareParts() {
                   onChange={handleFormChange}
                   required
                   min="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputClassName}
                   placeholder="0"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (Frw) *</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Unit Price (Frw)</span>
                 <input
                   type="number"
                   name="unitPrice"
@@ -289,34 +335,34 @@ export default function SpareParts() {
                   required
                   step="0.01"
                   min="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputClassName}
                   placeholder="0.00"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block md:col-span-2">
+                <span className="mb-2 block text-sm font-medium text-slate-600">Description</span>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleFormChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Optional description"
-                  rows="3"
+                  className={inputClassName}
+                  placeholder="Optional notes about this part"
+                  rows="4"
                 />
-              </div>
+              </label>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 md:col-span-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-black hover:bg-gray-800 text-white font-semibold py-2 rounded-lg transition duration-200"
+                  className="flex-1 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
                 >
-                  {editingId ? 'Update' : 'Add'}
+                  {editingId ? "Update Part" : "Save Part"}
                 </button>
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition duration-200"
+                  className="flex-1 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
                 >
                   Cancel
                 </button>

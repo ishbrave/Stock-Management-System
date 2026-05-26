@@ -1,13 +1,38 @@
-import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
+import { useContext, useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BarChart3,
+  Boxes,
+  CircleDollarSign,
+} from "lucide-react";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { AuthContext } from "../context/AuthContextObject";
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = "http://localhost:5000/api";
+const chartColors = ["#38bdf8", "#60a5fa", "#93c5fd", "#dbeafe"];
 
-const Dashboard = () => {
+const formatCurrency = (value) => `${Number(value || 0).toFixed(2)} Frw`;
+
+function StatCard({ icon: Icon, label, value, hint }) {
+  return (
+    <div className="surface-card rounded-xl p-5 transition duration-300 hover:-translate-y-1">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-600 text-white">
+          <Icon size={22} />
+        </div>
+        <span className="text-xs uppercase tracking-[0.24em] text-sky-500">Overview</span>
+      </div>
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-semibold text-slate-800">{value}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-500">{hint}</p>
+    </div>
+  );
+}
+
+export default function Dashboard() {
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalSpareParts: 0,
     totalStockValue: 0,
@@ -22,17 +47,13 @@ const Dashboard = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-        console.log('Fetching dashboard stats with token:', token ? 'Present' : 'Missing');
-        
+        const token = localStorage.getItem("token");
         const response = await fetch(`${API_URL}/stock/dashboard/stats`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
-
-        console.log('Dashboard stats response status:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -40,138 +61,172 @@ const Dashboard = () => {
         }
 
         const data = await response.json();
-        console.log('Dashboard stats received:', data);
         setStats(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
-        setError(err.message || 'Failed to fetch statistics');
+        setError(err.message || "Failed to fetch statistics");
       } finally {
         setLoading(false);
       }
     };
 
-    // Only fetch if user is logged in
     if (user) {
       fetchStats();
     }
   }, [user]);
 
-  const StatCard = ({ icon, label, value /* color unused now */ }) => (
-    <div className="bg-white border border-gray-300 rounded-lg shadow-lg p-6 text-black">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm opacity-90">{label}</p>
-          <p className="text-3xl font-bold">{typeof value === 'number' ? value.toLocaleString() : value}</p>
-        </div>
-        <div className="text-4xl">{icon}</div>
-      </div>
-    </div>
+  const chartData = useMemo(
+    () => [
+      { name: "Stock In", value: stats.stockInCount },
+      { name: "Stock Out", value: stats.stockOutCount },
+      { name: "Low Stock", value: stats.lowStockItems },
+      {
+        name: "Active Parts",
+        value: Math.max(stats.totalSpareParts - stats.lowStockItems, 0),
+      },
+    ].filter((item) => item.value > 0),
+    [stats],
   );
 
-  return (
-    <div className="min-h-screen bg-white text-black">
-      <Navbar />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2">Welcome, {user?.username}! </h1>
-          <p className="text-gray-600">Here's an overview of your stock management system</p>
+  if (loading) {
+    return (
+      <div className="page-shell px-4 py-8 lg:px-8">
+        <div className="surface-card mx-auto flex min-h-[60vh] max-w-7xl items-center justify-center rounded-xl">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-sky-500 border-t-transparent" />
+            <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Loading Dashboard</p>
+          </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Stats Grid */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg text-gray-600">Loading statistics...</div>
+  return (
+    <div className="page-shell px-4 py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <section className="surface-card overflow-hidden rounded-xl">
+          <div className="grid gap-8 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-sky-500">Dashboard</p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-800">
+                Welcome back, {user?.username}.
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
+                Here is a clean snapshot of your stock movement, inventory value,
+                and parts that need attention.
+              </p>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border border-sky-200 bg-sky-600 px-4 py-4 text-white">
+                  <p className="text-xs uppercase tracking-[0.3em] text-sky-50/85">Inventory Value</p>
+                  <p className="mt-2 text-2xl font-semibold">{formatCurrency(stats.totalStockValue)}</p>
+                </div>
+                <div className="rounded-lg border border-sky-100 bg-sky-50 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-sky-500">Transactions</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-800">
+                    {stats.stockInCount + stats.stockOutCount}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-sky-100 bg-sky-50 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-sky-500">Attention Needed</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-800">{stats.lowStockItems}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-sky-100 bg-sky-50/80 p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-sky-500">Visual Overview</p>
+                  <h2 className="mt-2 text-lg font-semibold text-slate-800">Stock Activity Mix</h2>
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-sky-600 text-white">
+                  <BarChart3 size={20} />
+                </div>
+              </div>
+
+              <div className="h-64">
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={58}
+                        outerRadius={86}
+                        paddingAngle={3}
+                        stroke="none"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={entry.name} fill={chartColors[index % chartColors.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-sky-200 text-sm text-slate-500">
+                    No dashboard data yet.
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {chartData.map((item, index) => (
+                  <div key={item.name} className="flex items-center gap-3 rounded-lg bg-white px-3 py-3">
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: chartColors[index % chartColors.length] }}
+                    />
+                    <span className="text-sm text-slate-500">{item.name}</span>
+                    <span className="ml-auto text-sm font-semibold text-slate-800">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : error ? (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            Error loading stats: {error}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <StatCard 
-              icon="📦" 
-              label="Total Spare Parts" 
-              value={stats.totalSpareParts}
-              color="from-blue-500 to-blue-600"
-            />
-            <StatCard 
-              icon="💰" 
-              label="Total Stock Value"
-              value={` ${stats.totalStockValue.toFixed(2)}Frw`}
-              color="from-green-500 to-green-600"
-            />
-            <StatCard 
-              icon="📥" 
-              label="Stock In Records"
-              value={stats.stockInCount}
-              color="from-purple-500 to-purple-600"
-            />
-            <StatCard 
-              icon="📤" 
-              label="Stock Out Records"
-              value={stats.stockOutCount}
-              color="from-orange-500 to-orange-600"
-            />
-            <StatCard 
-              icon="⚠️" 
-              label="Low Stock Items"
-              value={stats.lowStockItems}
-              color="from-red-500 to-red-600"
-            />
+        </section>
+
+        {error && (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-800">
+            {error}
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <QuickActionCard
-            title="Manage Spare Parts"
-            description="Add, edit, or view all spare parts inventory"
-            icon="📋"
-            buttonText="Go to Spare Parts"
-            onClick={() => navigate('/spare-parts')}
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            icon={Boxes}
+            label="Total Spare Parts"
+            value={stats.totalSpareParts.toLocaleString()}
+            hint="All spare part records currently stored in the system."
           />
-          <QuickActionCard
-            title="Record Stock In"
-            description="Add new stock to your inventory"
-            icon="📥"
-            buttonText="Record Stock In"
-            onClick={() => navigate('/stock-in')}
+          <StatCard
+            icon={CircleDollarSign}
+            label="Total Stock Value"
+            value={formatCurrency(stats.totalStockValue)}
+            hint="Live valuation based on quantity and unit price across parts."
           />
-          <QuickActionCard
-            title="Record Stock Out"
-            description="Issue spare parts from inventory"
-            icon="📤"
-            buttonText="Record Stock Out"
-            onClick={() => navigate('/stock-out')}
+          <StatCard
+            icon={ArrowDownToLine}
+            label="Stock In Records"
+            value={stats.stockInCount.toLocaleString()}
+            hint="Inbound transactions recorded into your inventory."
           />
-          <QuickActionCard
-            title="View Reports"
-            description="Check stock history and transactions"
-            icon="📊"
-            buttonText="View Reports"
-            onClick={() => navigate('/reports')}
+          <StatCard
+            icon={ArrowUpFromLine}
+            label="Stock Out Records"
+            value={stats.stockOutCount.toLocaleString()}
+            hint="Outbound transactions issued from available stock."
           />
-        </div>
+          <StatCard
+            icon={AlertTriangle}
+            label="Low Stock Items"
+            value={stats.lowStockItems.toLocaleString()}
+            hint="Parts currently at or below the low-stock threshold."
+          />
+        </section>
+
       </div>
     </div>
   );
-};
-
-const QuickActionCard = ({ title, description, icon, buttonText, onClick /* color unused */ }) => (
-  <div className="bg-white border border-gray-300 rounded-lg shadow-md p-6 cursor-pointer transition duration-300 hover:bg-gray-100">
-    <div className="text-3xl mb-3 text-black">{icon}</div>
-    <h3 className="text-lg font-semibold text-black mb-2">{title}</h3>
-    <p className="text-sm text-gray-600 mb-4">{description}</p>
-    <button
-      onClick={onClick}
-      className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 rounded-lg transition duration-200"
-    >
-      {buttonText}
-    </button>
-  </div>
-);
-
-export default Dashboard;
+}

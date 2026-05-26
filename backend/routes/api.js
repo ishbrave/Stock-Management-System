@@ -7,6 +7,8 @@ const stockRoutes = require('./stockRoutes');
 //Auth routes (no auth middleware needed)
 router.post('/login', authController.login);
 router.post('/register', authController.register);
+router.post('/forgot-password', authController.requestPasswordReset);
+router.post('/reset-password', authController.resetPassword);
 
 // Token validation route (protected by auth middleware)
 router.get('/validate-token', authMiddleware, authController.validateToken);

@@ -86,10 +86,10 @@ exports.deleteSparePart = async (req, res) => {
 
 exports.createStockIn = async (req, res) => {
   try {
-    const { sparePartId, stockInQuantity, supplier, notes } = req.body;
+    const { sparePartId, stockInQuantity, stockInUnitPrice, supplier, notes } = req.body;
 
-    if (!sparePartId || !stockInQuantity) {
-      return res.status(400).json({ message: 'Spare part ID and quantity are required' });
+    if (!sparePartId || !stockInQuantity || !stockInUnitPrice) {
+      return res.status(400).json({ message: 'Spare part ID, quantity, and unit price are required' });
     }
 
     const sparePart = await SparePart.findById(sparePartId);
@@ -101,6 +101,7 @@ exports.createStockIn = async (req, res) => {
     const stockIn = new StockIn({
       sparePart: sparePartId,
       stockInQuantity: parseInt(stockInQuantity),
+      stockInUnitPrice: parseFloat(stockInUnitPrice),
       supplier,
       notes,
       createdBy: req.user.id,
@@ -108,7 +109,7 @@ exports.createStockIn = async (req, res) => {
 
     await stockIn.save();
 
-    // Update spare part quantity and totalPrice
+    // Update spare part quantity and timestamp
     sparePart.quantity += parseInt(stockInQuantity);
     sparePart.lastUpdated = Date.now();
     await sparePart.save();
@@ -269,6 +270,8 @@ exports.getStockReport = async (req, res) => {
         date: si.stockInDate,
         sparePart: si.sparePart,
         quantity: si.stockInQuantity,
+        unitPrice: si.stockInUnitPrice,
+        totalPrice: si.stockInTotalPrice,
         supplier: si.supplier,
         notes: si.notes,
         createdBy: si.createdBy,
